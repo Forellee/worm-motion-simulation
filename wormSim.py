@@ -5,7 +5,7 @@ import random
 # Параметры экрана
 WIDTH, HEIGHT = 800, 600
 WHITE = (255, 255, 255)
-
+worm_color = (247, 163, 163)  # Цвет червя
 
 # Инициализация Pygame
 pygame.init()
@@ -17,14 +17,11 @@ SEGMENT_SIZE = 15
 NUM_SEGMENTS = 20
 worm_segments = [(WIDTH // 2, HEIGHT // 2) for _ in range(NUM_SEGMENTS)]
 angle = 0  # Начальный угол поворота
-speed = 2  # Скорость движения
+speed = 3  # Скорость движения
 angle_change = 0  # Поворот направления
 
-
-# Функция для случайного поворота
-def random_turn():
-    return random.uniform(-0.2, 0.2)  # Случайный угол поворота
-
+# Максимальный угол поворота при столкновении со стеной
+MAX_TURN_ANGLE = math.radians(10)  # 10 градусов
 
 running = True
 while running:
@@ -36,20 +33,27 @@ while running:
             running = False
 
     # Случайное изменение направления
-    angle_change += random_turn()
+    angle_change += random.uniform(-0.1, 0.1)  # Плавные изменения направления
 
     # Обновление позиции головы червя
-    x, y = worm_segments[0]
-    new_x = x + speed * math.cos(angle + angle_change)
-    new_y = y + speed * math.sin(angle + angle_change)
+    head_x, head_y = worm_segments[0]
+    new_x = head_x + speed * math.cos(angle + angle_change)
+    new_y = head_y + speed * math.sin(angle + angle_change)
 
-    # Проверка на столкновение со стенами
-    if new_x < SEGMENT_SIZE // 2 or new_x > WIDTH - SEGMENT_SIZE // 2:
-        angle_change = -angle_change + random_turn()  # Изменение направления на противоположное
-        new_x = x  # Оставляем червя на текущей позиции
-    if new_y < SEGMENT_SIZE // 2 or new_y > HEIGHT - SEGMENT_SIZE // 2:
-        angle_change = -angle_change + random_turn()
-        new_y = y
+    # Проверка на столкновение со стенами и коррекция позиции
+    if new_x < SEGMENT_SIZE // 2:  # Столкновение с левой стеной
+        new_x = SEGMENT_SIZE // 2
+        angle_change += random.uniform(math.pi / 4, math.pi / 2)  # Случайный поворот
+    elif new_x > WIDTH - SEGMENT_SIZE // 2:  # Столкновение с правой стеной
+        new_x = WIDTH - SEGMENT_SIZE // 2
+        angle_change += random.uniform(-math.pi / 4, -math.pi / 2)  # Случайный поворот
+
+    if new_y < SEGMENT_SIZE // 2:  # Столкновение с верхней стеной
+        new_y = SEGMENT_SIZE // 2
+        angle_change += random.uniform(math.pi / 4, math.pi / 2)  # Случайный поворот
+    elif new_y > HEIGHT - SEGMENT_SIZE // 2:  # Столкновение с нижней стеной
+        new_y = HEIGHT - SEGMENT_SIZE // 2
+        angle_change += random.uniform(-math.pi / 4, -math.pi / 2)  # Случайный поворот
 
     worm_segments[0] = (new_x, new_y)
 
@@ -62,9 +66,12 @@ while running:
         dx = prev_x - curr_x
         dy = prev_y - curr_y
         distance = math.hypot(dx, dy)
+
+        # Перемещение сегмента ближе к предыдущему, если расстояние больше размера сегмента
         if distance > SEGMENT_SIZE:
-            curr_x += (dx / distance) * speed
-            curr_y += (dy / distance) * speed
+            # Пропорциональное перемещение для плавного следования
+            curr_x += (dx / distance) * speed * 0.8  # Меньшая скорость для плавности
+            curr_y += (dy / distance) * speed * 0.8
             worm_segments[i] = (curr_x, curr_y)
 
     # Отрисовка червя
