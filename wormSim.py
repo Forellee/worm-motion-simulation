@@ -5,7 +5,7 @@ import random
 # Параметры экрана
 WIDTH, HEIGHT = 800, 600
 WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
+
 
 # Инициализация Pygame
 pygame.init()
@@ -40,9 +40,18 @@ while running:
 
     # Обновление позиции головы червя
     x, y = worm_segments[0]
-    x += speed * math.cos(angle + angle_change)
-    y += speed * math.sin(angle + angle_change)
-    worm_segments[0] = (x, y)
+    new_x = x + speed * math.cos(angle + angle_change)
+    new_y = y + speed * math.sin(angle + angle_change)
+
+    # Проверка на столкновение со стенами
+    if new_x < SEGMENT_SIZE // 2 or new_x > WIDTH - SEGMENT_SIZE // 2:
+        angle_change = -angle_change + random_turn()  # Изменение направления на противоположное
+        new_x = x  # Оставляем червя на текущей позиции
+    if new_y < SEGMENT_SIZE // 2 or new_y > HEIGHT - SEGMENT_SIZE // 2:
+        angle_change = -angle_change + random_turn()
+        new_y = y
+
+    worm_segments[0] = (new_x, new_y)
 
     # Обновление позиции сегментов червя
     for i in range(1, NUM_SEGMENTS):
@@ -60,7 +69,7 @@ while running:
 
     # Отрисовка червя
     for segment in worm_segments:
-        pygame.draw.circle(screen, GREEN, (int(segment[0]), int(segment[1])), SEGMENT_SIZE // 2)
+        pygame.draw.circle(screen, worm_color, (int(segment[0]), int(segment[1])), SEGMENT_SIZE // 2)
 
     pygame.display.flip()
     pygame.time.delay(30)
