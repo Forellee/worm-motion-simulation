@@ -5,8 +5,9 @@ import random
 # Параметры экрана
 WIDTH, HEIGHT = 800, 600
 WHITE = (255, 255, 255)
-worm_color = (247, 163, 163)  # Цвет червя
+worm_color = (247, 163, 163)  # Цвет тела червя
 head_color = (255, 255, 255)  # Цвет головы червя (белый)
+organ_color = (255, 0, 0)  # Цвет органов внутри червя
 
 # Инициализация Pygame
 pygame.init()
@@ -15,7 +16,7 @@ pygame.display.set_caption("Симуляция движения червя")
 
 # Параметры червя
 SEGMENT_SIZE = 15
-NUM_SEGMENTS = 20
+NUM_SEGMENTS = 50  # Увеличено количество сегментов для большей реалистичности
 worm_segments = [(WIDTH // 2, HEIGHT // 2) for _ in range(NUM_SEGMENTS)]
 angle = 0  # Начальный угол поворота
 speed = 3  # Скорость движения
@@ -23,6 +24,10 @@ angle_change = 0  # Поворот направления
 
 # Максимальный угол поворота
 MAX_TURN_ANGLE = math.radians(5)  # 5 градусов для плавности
+
+# Функция для сглаживания координат
+def smooth_move(current, target, smoothing_factor=0.1):
+    return current + (target - current) * smoothing_factor
 
 running = True
 while running:
@@ -63,21 +68,28 @@ while running:
         prev_x, prev_y = worm_segments[i - 1]
         curr_x, curr_y = worm_segments[i]
 
-        # Постепенное следование каждого сегмента за предыдущим
-        dx = prev_x - curr_x
-        dy = prev_y - curr_y
-        distance = math.hypot(dx, dy)
+        # Сглаживаем движение каждого сегмента
+        worm_segments[i] = (
+            smooth_move(curr_x, prev_x, 0.1),
+            smooth_move(curr_y, prev_y, 0.1)
+        )
 
-        if distance > SEGMENT_SIZE:  # Двигаем сегмент ближе к предыдущему
-            # Пропорциональное перемещение для плавного следования
-            curr_x += (dx / distance) * (speed * 0.5)  # Меньшая скорость для плавности
-            curr_y += (dy / distance) * (speed * 0.5)
-            worm_segments[i] = (curr_x, curr_y)
-
-    # Отрисовка червя
+    # Отрисовка червя с полым телом
     for i, segment in enumerate(worm_segments):
-        color = head_color if i == 0 else worm_color  # Задаем цвет для головы и тела
-        pygame.draw.circle(screen, color, (int(segment[0]), int(segment[1])), SEGMENT_SIZE // 2)
+        # Отрисовка тела червя
+        pygame.draw.circle(screen, worm_color, (int(segment[0]), int(segment[1])), SEGMENT_SIZE // 2)
+
+        # Отрисовка органов внутри червя
+        if i == 0:  # Организуем органы только в голове
+            pygame.draw.circle(screen, organ_color, (int(segment[0]), int(segment[1])), SEGMENT_SIZE // 4)  # Орган в голове
+        else:
+            # Положение для органов в теле
+            organ_x = segment[0] + random.uniform(-SEGMENT_SIZE // 8, SEGMENT_SIZE // 8)
+            organ_y = segment[1] + random.uniform(-SEGMENT_SIZE // 8, SEGMENT_SIZE // 8)
+            pygame.draw.circle(screen, organ_color, (int(organ_x), int(organ_y)), SEGMENT_SIZE // 4)  # Орган в теле
+
+    # Отрисовка головы
+    pygame.draw.circle(screen, head_color, (int(worm_segments[0][0]), int(worm_segments[0][1])), SEGMENT_SIZE // 2)
 
     pygame.display.flip()
     pygame.time.delay(30)
