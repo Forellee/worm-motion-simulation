@@ -6,6 +6,7 @@ import random
 WIDTH, HEIGHT = 800, 600
 WHITE = (255, 255, 255)
 worm_color = (247, 163, 163)  # Цвет червя
+head_color = (255, 255, 255)  # Цвет головы червя (белый)
 
 # Инициализация Pygame
 pygame.init()
@@ -20,8 +21,8 @@ angle = 0  # Начальный угол поворота
 speed = 3  # Скорость движения
 angle_change = 0  # Поворот направления
 
-# Максимальный угол поворота при столкновении со стеной
-MAX_TURN_ANGLE = math.radians(10)  # 10 градусов
+# Максимальный угол поворота
+MAX_TURN_ANGLE = math.radians(5)  # 5 градусов для плавности
 
 running = True
 while running:
@@ -40,20 +41,20 @@ while running:
     new_x = head_x + speed * math.cos(angle + angle_change)
     new_y = head_y + speed * math.sin(angle + angle_change)
 
-    # Проверка на столкновение со стенами и коррекция позиции
+    # Проверка на столкновение со стенами
     if new_x < SEGMENT_SIZE // 2:  # Столкновение с левой стеной
         new_x = SEGMENT_SIZE // 2
-        angle_change += random.uniform(math.pi / 4, math.pi / 2)  # Случайный поворот
+        angle_change += random.uniform(-math.pi / 2, math.pi / 2)  # Поворот в случайную сторону
     elif new_x > WIDTH - SEGMENT_SIZE // 2:  # Столкновение с правой стеной
         new_x = WIDTH - SEGMENT_SIZE // 2
-        angle_change += random.uniform(-math.pi / 4, -math.pi / 2)  # Случайный поворот
+        angle_change += random.uniform(-math.pi / 2, math.pi / 2)  # Поворот в случайную сторону
 
     if new_y < SEGMENT_SIZE // 2:  # Столкновение с верхней стеной
         new_y = SEGMENT_SIZE // 2
-        angle_change += random.uniform(math.pi / 4, math.pi / 2)  # Случайный поворот
+        angle_change += random.uniform(-math.pi / 2, math.pi / 2)  # Поворот в случайную сторону
     elif new_y > HEIGHT - SEGMENT_SIZE // 2:  # Столкновение с нижней стеной
         new_y = HEIGHT - SEGMENT_SIZE // 2
-        angle_change += random.uniform(-math.pi / 4, -math.pi / 2)  # Случайный поворот
+        angle_change += random.uniform(-math.pi / 2, math.pi / 2)  # Поворот в случайную сторону
 
     worm_segments[0] = (new_x, new_y)
 
@@ -67,16 +68,16 @@ while running:
         dy = prev_y - curr_y
         distance = math.hypot(dx, dy)
 
-        # Перемещение сегмента ближе к предыдущему, если расстояние больше размера сегмента
-        if distance > SEGMENT_SIZE:
+        if distance > SEGMENT_SIZE:  # Двигаем сегмент ближе к предыдущему
             # Пропорциональное перемещение для плавного следования
-            curr_x += (dx / distance) * speed * 0.8  # Меньшая скорость для плавности
-            curr_y += (dy / distance) * speed * 0.8
+            curr_x += (dx / distance) * (speed * 0.5)  # Меньшая скорость для плавности
+            curr_y += (dy / distance) * (speed * 0.5)
             worm_segments[i] = (curr_x, curr_y)
 
     # Отрисовка червя
-    for segment in worm_segments:
-        pygame.draw.circle(screen, worm_color, (int(segment[0]), int(segment[1])), SEGMENT_SIZE // 2)
+    for i, segment in enumerate(worm_segments):
+        color = head_color if i == 0 else worm_color  # Задаем цвет для головы и тела
+        pygame.draw.circle(screen, color, (int(segment[0]), int(segment[1])), SEGMENT_SIZE // 2)
 
     pygame.display.flip()
     pygame.time.delay(30)
